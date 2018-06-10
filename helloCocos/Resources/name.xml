@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dict>  
+2     <key>name</key>  
+3     <string>陈帆</string>  
+4     <key>string2</key>  
+5     <string>使用XML显示中文</string>  
+6     <key>string3</key>  
+7     <string>key与string标签中的内容是对应的</string> 
+8 </dict>  

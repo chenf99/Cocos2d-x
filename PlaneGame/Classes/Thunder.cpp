@@ -158,11 +158,11 @@ void Thunder::explosion() {
 	auto texture = Director::getInstance()->getTextureCache()->addImage("explosion.png");
 	explore.reserve(8);
 	for (int i = 0; i < 5; ++i) {
-		auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(i * 190, 0, 190, 200)));
+		auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(i * 193 + 1, 0, 142, 142)));
 		explore.pushBack(frame);
 	}
 	for (int i = 0; i < 3; ++i) {
-		auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(i * 190, 200, 190, 200)));
+		auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(i * 193 + 1, 193, 142, 142)));
 		explore.pushBack(frame);
 	}
 	auto exploreAnimation = Animation::createWithSpriteFrames(explore, 0.05f);
@@ -224,48 +224,43 @@ void Thunder::Boom(Sprite* enemy) {
 
 // 自定义碰撞事件
 void Thunder::meet(EventCustom * event) {
-		// 判断子弹是否打中陨石并执行对应操作
-		auto bullet = bullets.begin();;
-		auto enemy = enemys.begin();
-		while (bullet != bullets.end()) {
-			while (enemy != enemys.end()) {
-				if ((*bullet)->getPosition().getDistance((*enemy)->getPosition()) < 50) {
-					//陨石爆炸
-					Boom((*enemy));
-					//子弹消失
-					(*bullet)->removeFromParentAndCleanup(true);
-					if (bullet == bullets.begin()) {
-						bullets.erase(bullet);
-						bullet = bullets.begin();
-					}
-					else {
-						bullet = bullets.erase(bullet);
-					}
-					//删除陨石
-					if (enemy == enemys.begin()) {
-						enemys.erase(enemy);
-						enemy = enemys.begin();
-					}
-					else {
-						enemy = enemys.erase(enemy);
-					}
-					break;
+	// 判断子弹是否打中陨石并执行对应操作
+	auto bullet = bullets.begin();;
+	auto enemy = enemys.begin();
+	while (bullet != bullets.end()) {
+		bool remove = false;
+		while (enemy != enemys.end()) {
+			if ((*bullet)->getPosition().getDistance((*enemy)->getPosition()) < 50) {
+				//陨石爆炸
+				Boom((*enemy));
+				//子弹消失
+				(*bullet)->removeFromParentAndCleanup(true);
+				if (bullet == bullets.begin()) {
+					bullets.erase(bullet);
+					bullet = bullets.begin();
 				}
 				else {
-					if (enemy != enemys.end())
-						enemy++;
+					bullet = bullets.erase(bullet);
 				}
+				//删除陨石
+				if (enemy == enemys.begin()) {
+					enemys.erase(enemy);
+					enemy = enemys.begin();
+				}
+				else {
+					enemy = enemys.erase(enemy);
+				}
+				remove = true;
+				break;
 			}
-			//等于end时不能++，否则会报错
-			if (bullet != bullets.end())
-				bullet++;
+			else {
+				enemy++;
+			}
 		}
+		if (remove == false)
+			bullet++;
+	}
 }
-
-
-
-
-
 
 void Thunder::stopAc() {
 	for (Sprite *stone : enemys) {
@@ -276,21 +271,21 @@ void Thunder::stopAc() {
 					Sequence::create(
 						CallFunc::create(
 							[] {
-					SimpleAudioEngine::getInstance()->playEffect("music/explore.wav");
-				}
+							SimpleAudioEngine::getInstance()->playEffect("music/explore.wav");
+							}
 						),
 						Animate::create(AnimationCache::getInstance()->getAnimation("exploreAnimation")),
-					CallFunc::create(
-						[&] {
-					this->removeChild(player, true);
-					this->getEventDispatcher()->removeAllEventListeners();
-					Sprite* mess = Sprite::create("gameOver.png");
-					mess->setPosition(Vec2(visibleSize.width / 2, visibleSize.height - 200));
-					this->addChild(mess, 1);
-					this->bullets.clear();
-					bulletsNum->setString("bullets: 0");
-					unschedule(schedule_selector(Thunder::update));
-				}),
+						CallFunc::create(
+							[&] {
+								this->removeChild(player, true);
+								this->getEventDispatcher()->removeAllEventListeners();
+								Sprite* mess = Sprite::create("gameOver.png");
+								mess->setPosition(Vec2(visibleSize.width / 2, visibleSize.height - 200));
+								this->addChild(mess, 1);
+								this->bullets.clear();
+								bulletsNum->setString("bullets: 0");
+								unschedule(schedule_selector(Thunder::update));
+						}),
 					nullptr));
 			}
 		}

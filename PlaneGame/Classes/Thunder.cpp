@@ -226,30 +226,18 @@ void Thunder::Boom(Sprite* enemy) {
 void Thunder::meet(EventCustom * event) {
 	// 判断子弹是否打中陨石并执行对应操作
 	auto bullet = bullets.begin();;
-	auto enemy = enemys.begin();
 	while (bullet != bullets.end()) {
 		bool remove = false;
+		auto enemy = enemys.begin();
 		while (enemy != enemys.end()) {
-			if ((*bullet)->getPosition().getDistance((*enemy)->getPosition()) < 50) {
+			if ((*bullet)->getPosition().getDistance((*enemy)->getPosition()) < 25) {
 				//陨石爆炸
 				Boom((*enemy));
 				//子弹消失
 				(*bullet)->removeFromParentAndCleanup(true);
-				if (bullet == bullets.begin()) {
-					bullets.erase(bullet);
-					bullet = bullets.begin();
-				}
-				else {
-					bullet = bullets.erase(bullet);
-				}
+				bullet = bullets.erase(bullet);
 				//删除陨石
-				if (enemy == enemys.begin()) {
-					enemys.erase(enemy);
-					enemy = enemys.begin();
-				}
-				else {
-					enemy = enemys.erase(enemy);
-				}
+				enemy = enemys.erase(enemy);
 				remove = true;
 				break;
 			}

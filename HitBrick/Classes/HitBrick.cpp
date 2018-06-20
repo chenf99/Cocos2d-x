@@ -56,7 +56,7 @@ bool HitBrick::init() {
 
   schedule(schedule_selector(HitBrick::update), 0.01f, kRepeatForever, 0.1f);
   //用于控制移动的调度器
-  schedule(schedule_selector(HitBrick::move), 0.01f, kRepeatForever, 0);
+  //schedule(schedule_selector(HitBrick::move), 0.01f, kRepeatForever, 0);
   
   onBall = true;
   spFactor = 0;
@@ -67,7 +67,7 @@ bool HitBrick::init() {
 // 关节连接，固定球与板子
 // Todo
 void HitBrick::setJoint() {
-	joint1 = PhysicsJointPin::construct(ball->getPhysicsBody(), player->getPhysicsBody(), Vec2(0, 0), Vec2(0, ball->getContentSize().height / 20));
+	joint1 = PhysicsJointPin::construct(ball->getPhysicsBody(), player->getPhysicsBody(), ball->getPosition());
 	m_world->addJoint(joint1);
 }
 
@@ -134,6 +134,7 @@ void HitBrick::addPlayer() {
   auto physicsBody_bar = PhysicsBody::createEdgeBox(Size(player->getContentSize()),
 	  PhysicsMaterial(1.0f, 1.0f, 0));
   physicsBody_bar->setDynamic(false);
+  //physicsBody_bar->setGravityEnable(false);
   physicsBody_bar->setCategoryBitmask(0x03);
   physicsBody_bar->setCollisionBitmask(0x03);
   physicsBody_bar->setContactTestBitmask(0x03);
@@ -155,10 +156,10 @@ void HitBrick::addPlayer() {
   ball->setPhysicsBody(physicsBody_ball);
   addChild(ball, 3);
   
-  /*fireball = ParticleFire::create();
+  fireball = ParticleFire::create();
   fireball->setPosition(ball->getPosition());
   fireball->setDuration(-1);
-  addChild(fireball, 5);*/
+  addChild(fireball, 5);
 }
 
 void HitBrick::update(float dt) {
@@ -166,9 +167,18 @@ void HitBrick::update(float dt) {
 	if (spHolded)
 		spFactor++;
 	//火焰效果始终在球上
-	//fireball->setPosition(ball->getPosition());
+	fireball->setPosition(ball->getPosition());
+	//不让板子超出边界
+	if (player->getPositionX() >= visibleSize.width - player->getContentSize().width / 20 || 
+		player->getPositionX() <= player->getContentSize().width / 20)
+		player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+	if (player->getPositionX() >= visibleSize.width - player->getContentSize().width / 20 && Apressed == true)
+		player->getPhysicsBody()->setVelocity(Vec2(-200, 0));
+	else if (player->getPositionX() <= player->getContentSize().width / 20 && Dpressed == true)
+		player->getPhysicsBody()->setVelocity(Vec2(200, 0));
 }
 
+/*
 //实现按下移动键板子一直移动
 void HitBrick::move(float dt) {
 	//板子移动
@@ -182,7 +192,7 @@ void HitBrick::move(float dt) {
 			if (onBall) ball->setPosition(ball->getPosition() + Vec2(dir, 0));
 		}
 	}
-}
+}*/
 
 //取消关节，发射小球
 void HitBrick::fire(int spFactor) {
@@ -225,14 +235,12 @@ void HitBrick::onKeyPressed(EventKeyboard::KeyCode code, Event* event) {
 
   switch (code) {
   case cocos2d::EventKeyboard::KeyCode::KEY_LEFT_ARROW:
-	  moveKey = 'A';
-	  isMove = true;
 	  Apressed = true;
+	  player->getPhysicsBody()->setVelocity(Vec2(-200,0));
 	break;
   case cocos2d::EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
-	  moveKey = 'D';
-	  isMove = true;
 	  Dpressed = true;
+	  player->getPhysicsBody()->setVelocity(Vec2(200, 0));
     break;
   case cocos2d::EventKeyboard::KeyCode::KEY_SPACE: // 开始蓄力
 	  if (onBall) {
@@ -249,13 +257,13 @@ void HitBrick::onKeyPressed(EventKeyboard::KeyCode code, Event* event) {
 void HitBrick::onKeyReleased(EventKeyboard::KeyCode code, Event* event) {
   switch (code) {
   case cocos2d::EventKeyboard::KeyCode::KEY_LEFT_ARROW:
-	  if (Dpressed == false) isMove = false;
-	  else moveKey = 'D';
+	  if (Dpressed == false) player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+	  else player->getPhysicsBody()->setVelocity(Vec2(200, 0));
 	  Apressed = false;
 	  break;
   case cocos2d::EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
-	  if (Apressed == false) isMove = false;
-	  else moveKey = 'A';
+	  if (Apressed == false) player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+	  else player->getPhysicsBody()->setVelocity(Vec2(-200, 0));
 	  Dpressed = false;
     break;
   case cocos2d::EventKeyboard::KeyCode::KEY_SPACE:   // 蓄力结束，小球发射

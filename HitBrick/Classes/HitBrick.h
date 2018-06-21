@@ -53,6 +53,7 @@ private:
   bool isMove;
   int brick_tag_min = 40;
   int brick_tag_max;
+  bool flag = false;
   ParticleFire* fireball;
 };
 

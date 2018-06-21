@@ -92,7 +92,7 @@ void HitBrick::addSprite() {
   ship = Sprite::create("ship.png");
   ship->setScale(visibleSize.width / ship->getContentSize().width * 0.97, 1.2f);
   ship->setPosition(visibleSize.width / 2, 0);
-  auto shipbody = PhysicsBody::createBox(ship->getContentSize(), PhysicsMaterial(100.0f, 0.0f, 1.0f));
+  auto shipbody = PhysicsBody::createBox(ship->getContentSize(), PhysicsMaterial(100.0f, 0.0f, 0));
   shipbody->setCategoryBitmask(0xFFFFFFFF);
   shipbody->setCollisionBitmask(0xFFFFFFFF);
   shipbody->setContactTestBitmask(0xFFFFFFFF);
@@ -132,13 +132,14 @@ void HitBrick::addPlayer() {
   player->setScale(0.1f, 0.1f);
   player->setPosition(Vec2(xpos, ship->getContentSize().height - player->getContentSize().height*0.1f));
   auto physicsBody_bar = PhysicsBody::createEdgeBox(Size(player->getContentSize()),
-	  PhysicsMaterial(1.0f, 1.0f, 0));
+	  PhysicsMaterial(1.0f, 1.0f, 0.5f));
   physicsBody_bar->setDynamic(false);
   //physicsBody_bar->setGravityEnable(false);
   physicsBody_bar->setCategoryBitmask(0x03);
   physicsBody_bar->setCollisionBitmask(0x03);
   physicsBody_bar->setContactTestBitmask(0x03);
   player->setPhysicsBody(physicsBody_bar);
+  player->setTag(200);
   // 设置板的刚体属性
   this->addChild(player, 2);
   
@@ -147,12 +148,14 @@ void HitBrick::addPlayer() {
   ball->setPosition(Vec2(xpos, player->getPosition().y + ball->getContentSize().height*0.05f));
   ball->setScale(0.1f, 0.1f);
   ball->setTag(BALL_TAG);
-  auto physicsBody_ball = PhysicsBody::createCircle(ball->getContentSize().width / 2,
-	  PhysicsMaterial(1.0f, 1.0f, 0));
+  auto physicsBody_ball = PhysicsBody::createBox(ball->getContentSize(),
+	  PhysicsMaterial(1.0f, 1.0f, 0.1f));
   physicsBody_ball->setDynamic(true);
   physicsBody_ball->setCategoryBitmask(0x01);
   physicsBody_ball->setCollisionBitmask(0x01);
   physicsBody_ball->setContactTestBitmask(0x01);
+  physicsBody_ball->setRotationEnable(false);
+  physicsBody_ball->setGravityEnable(false);
   ball->setPhysicsBody(physicsBody_ball);
   addChild(ball, 3);
   
@@ -164,8 +167,9 @@ void HitBrick::addPlayer() {
 
 void HitBrick::update(float dt) {
 	// 实现简单的蓄力效果
-	if (spHolded)
+	if (spHolded && spFactor < 80)
 		spFactor++;
+	flag = false;
 	//火焰效果始终在球上
 	fireball->setPosition(ball->getPosition());
 	//不让板子超出边界
@@ -212,7 +216,7 @@ void HitBrick::BrickGeneraetd() {
 			auto box = Sprite::create("box.png");
 			auto width = box->getContentSize().width;
 			auto height = box->getContentSize().height;
-			auto physicsBody = PhysicsBody::createEdgeBox(box->getContentSize(), PhysicsMaterial(0.1f, 1.0f, 0.5f));
+			auto physicsBody = PhysicsBody::createEdgeBox(box->getContentSize(), PhysicsMaterial(0.1f, 1.0f, 0.1f));
 			physicsBody->setDynamic(false);
 			physicsBody->setContactTestBitmask(0x05);
 			physicsBody->setCategoryBitmask(0x05);
@@ -299,16 +303,27 @@ bool HitBrick::onContactBegin(PhysicsContact & contact) {
 			addChild(flower);
 		}
 
-		else if (node1->getTag() == BALL_TAG && node2->getPhysicsBody()->getTag() == SHIP_TAG) {
+
+		else if (node1->getTag() == BALL_TAG && node2->getTag() == 200) {
+			flag = true;
+			return true;
+		}
+		else if (node1->getTag() == 200 && node2->getTag() == BALL_TAG) {
+			flag = true;
+			return true;
+		}
+
+		else if (node1->getTag() == BALL_TAG && node2->getPhysicsBody()->getTag() == SHIP_TAG && flag == false) {
 			explosion->setPosition(node1->getPosition() - Vec2(0, node1->getContentSize().height / 20));
 			addChild(explosion, 3);
 			GameOver();
 		}
-		else if (node1->getPhysicsBody()->getTag() == SHIP_TAG && node2->getTag() == BALL_TAG) {
+		else if (node1->getPhysicsBody()->getTag() == SHIP_TAG && node2->getTag() == BALL_TAG && flag == false) {
 			explosion->setPosition(node2->getPosition() - Vec2(0, node2->getContentSize().height / 20));
 			addChild(explosion, 3);
 			GameOver();
 		}
+		flag = false;
 	}
 
   return true;
